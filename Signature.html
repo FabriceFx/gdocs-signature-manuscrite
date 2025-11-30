@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      font-size: 14px;
+      background-color: #ffffff;
+      color: #202124;
+      padding: 24px;
+      text-align: center;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 20px;
+    }
+
+    canvas {
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      cursor: crosshair;
+      touch-action: none;
+      display: block;
+      margin-bottom: 15px; /* Réduit un peu pour laisser place à la checkbox */
+      background-color: #fff;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); /* Ajout d'une ombre subtile */
+    }
+
+    /* --- NOUVEAU : Style de la Checkbox --- */
+    .option-sauvegarde {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #5f6368;
+      font-size: 13px;
+    }
+    
+    .option-sauvegarde input[type="checkbox"] {
+      accent-color: #1a73e8;
+      cursor: pointer;
+    }
+
+    /* --- Styles des Boutons --- */
+    .conteneur-boutons { display: flex; justify-content: center; }
+
+    button {
+      font-family: 'Roboto', Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 4px;
+      padding: 9px 23px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      margin: 0 4px;
+    }
+
+    #btn-inserer { background-color: #1a73e8; color: #ffffff; }
+    #btn-inserer:hover { background-color: #1764cc; box-shadow: 0 1px 2px rgba(60,64,67,0.3); }
+    #btn-inserer:disabled { background-color: #f1f3f4; color: #bdc1c6; cursor: not-allowed; box-shadow: none; }
+
+    #btn-effacer { background-color: #ffffff; color: #1a73e8; border: 1px solid #dadce0; }
+    #btn-effacer:hover { background-color: #f8fafe; border-color: #1a73e8; }
+
+    #zone-erreur { color: #d93025; margin-top: 16px; font-size: 13px; min-height: 1.2em; }
+    .succes-msg { color: #188038 !important; }
+  </style>
+</head>
+<body>
+
+  <h3>✍️ Signez ci-dessous</h3>
+  
+  <canvas id="canvas-signature" width="340" height="160"></canvas>
+  
+  <div class="option-sauvegarde">
+    <input type="checkbox" id="chk-sauvegarder" checked>
+    <label for="chk-sauvegarder">Mémoriser ma signature pour la prochaine fois</label>
+  </div>
+  
+  <div class="conteneur-boutons">
+    <button id="btn-effacer">Effacer</button>
+    <button id="btn-inserer">Insérer</button>
+  </div>
+  
+  <div id="zone-erreur"></div>
+
+<script>
+  /**
+   * INJECTION CÔTÉ SERVEUR
+   * On récupère la signature existante passée par le template Apps Script.
+   * La balise < ?= ... ? > est évaluée avant que la page n'arrive au navigateur.
+   */
+  const SIGNATURE_INITIALE = "<?= donneesSignatureExistante ?>";
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Références DOM ---
+    const canvas = document.getElementById('canvas-signature');
+    const contexte = canvas.getContext('2d');
+    const boutonEffacer = document.getElementById('btn-effacer');
+    const boutonInserer = document.getElementById('btn-inserer');
+    const zoneErreur = document.getElementById('zone-erreur');
+    const chkSauvegarder = document.getElementById('chk-sauvegarder');
+
+    // --- État ---
+    let dessinEnCours = false;
+    let estVide = true;
+
+    // Config Canvas
+    contexte.lineWidth = 2;
+    contexte.lineCap = 'round';
+    contexte.strokeStyle = '#000';
+
+    // Bouton désactivé par défaut
+    boutonInserer.disabled = true;
+
+    // --- LOGIQUE DE CHARGEMENT DE L'IMAGE EXISTANTE ---
+    if (SIGNATURE_INITIALE && SIGNATURE_INITIALE.length > 10) {
+       const imageObj = new Image();
+       imageObj.onload = () => {
+         contexte.drawImage(imageObj, 0, 0);
+         // Important : On met à jour l'état car le canvas n'est plus vide
+         estVide = false;
+         boutonInserer.disabled = false; 
+       };
+       imageObj.src = SIGNATURE_INITIALE;
+    }
+
+    // --- Fonctions Dessin (Gardées de votre code) ---
+    const getCoordonnees = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || e.touches[0].clientX;
+      const clientY = e.clientY || e.touches[0].clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const demarrerDessin = (e) => {
+      dessinEnCours = true;
+      const { x, y } = getCoordonnees(e);
+      contexte.beginPath();
+      contexte.moveTo(x, y);
+    };
+
+    const arreterDessin = () => { dessinEnCours = false; };
+
+    const dessiner = (e) => {
+      if (!dessinEnCours) return;
+      e.preventDefault();
+      const { x, y } = getCoordonnees(e);
+      contexte.lineTo(x, y);
+      contexte.stroke();
+
+      if (estVide) {
+        estVide = false;
+        boutonInserer.disabled = false;
+      }
+    };
+
+    // --- Events Listeners ---
+    ['mousedown', 'touchstart'].forEach(ev => canvas.addEventListener(ev, demarrerDessin, {passive: false}));
+    ['mouseup', 'touchend', 'mouseout'].forEach(ev => canvas.addEventListener(ev, arreterDessin));
+    ['mousemove', 'touchmove'].forEach(ev => canvas.addEventListener(ev, dessiner, {passive: false}));
+
+    // --- Actions ---
+
+    const effacerCanvas = () => {
+      contexte.clearRect(0, 0, canvas.width, canvas.height);
+      estVide = true;
+      boutonInserer.disabled = true;
+      zoneErreur.textContent = '';
+      zoneErreur.className = '';
+    };
+
+    const enregistrerSignature = () => {
+      if (estVide) return;
+
+      // UI Feedback
+      boutonInserer.disabled = true;
+      boutonEffacer.disabled = true;
+      boutonInserer.textContent = 'Traitement...';
+      zoneErreur.textContent = '';
+
+      const donneesImage = canvas.toDataURL('image/png');
+      // Récupération de l'état de la checkbox
+      const doitSauvegarder = chkSauvegarder.checked;
+
+      // Appel de la NOUVELLE fonction serveur (V2)
+      google.script.run
+        .withSuccessHandler(gererSucces)
+        .withFailureHandler(gererEchec)
+        .insererEtSauvegarderSignature(donneesImage, doitSauvegarder);
+    };
+    
+    const gererSucces = () => {
+      zoneErreur.textContent = 'Signature insérée avec succès !';
+      zoneErreur.className = 'succes-msg';
+      setTimeout(() => google.script.host.close(), 800);
+    };
+
+    const gererEchec = (erreur) => {
+      console.error(erreur);
+      zoneErreur.textContent = `Erreur : ${erreur.message}`;
+      zoneErreur.className = '';
+      
+      // Reset UI
+      boutonInserer.disabled = false;
+      boutonEffacer.disabled = false;
+      boutonInserer.textContent = 'Insérer';
+    };
+
+    boutonEffacer.addEventListener('click', effacerCanvas);
+    boutonInserer.addEventListener('click', enregistrerSignature);
+  });
+</script>
+</body>
+</html>
