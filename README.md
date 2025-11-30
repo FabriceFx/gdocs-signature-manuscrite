@@ -7,25 +7,25 @@
 
 Un script complet pour Google Docs permettant aux utilisateurs de dessiner, insérer et sauvegarder leur signature manuscrite directement dans leurs documents, sans passer par des outils tiers.
 
-## 🚀 Fonctionnalités Clés
+## 🚀 Fonctionnalités clés
 
 * **Intégration Native** : Menu dédié "✍️ Signature" directement dans l'interface Google Docs.
 * **Interface de Dessin** : Utilisation de HTML5 Canvas pour un tracé fluide et précis (souris et tactile).
 * **Persistance Intelligente** : 
     * Sauvegarde automatique de la signature sur le Google Drive de l'utilisateur (`user_signature_config.txt`).
     * Rechargement automatique de la signature lors de la prochaine utilisation.
-* **Insertion Optimisée** :
+* **Insertion optimisée** :
     * Supporte le positionnement au curseur.
     * Redimensionnement automatique proportionnel (Largeur : 150px).
 * **UX Soignée** : Design respectant les codes "Material Design" de Google.
 
-## 🛠️ Installation et Configuration
+## 🛠️ Installation et configuration
 
 ### Prérequis
 * Un compte Google.
 * Un document Google Docs (ou un déploiement en tant qu'Add-on).
 
-### Installation Manuelle (Bound Script)
+### Installation manuelle 
 1.  Ouvrez un Google Doc.
 2.  Allez dans **Extensions** > **Apps Script**.
 3.  **Fichier Code.gs** : Copiez le contenu de `Code.gs` fourni dans ce dépôt.
@@ -43,7 +43,7 @@ Lors de la première exécution, le script demandera les autorisations suivantes
 * **Voir et gérer les fichiers Google Drive** : Pour lire et sauvegarder votre signature (fichier de config uniquement).
 * **Afficher des boîtes de dialogue** : Pour l'interface de dessin.
 
-## 📂 Structure du Projet
+## 📂 Structure du projet
 
 ```text
 ├── Code.gs           # Logique Serveur (GAS, DriveApp, DocumentApp)
