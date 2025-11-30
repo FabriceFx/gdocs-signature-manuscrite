@@ -2,6 +2,8 @@
 
 ![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Google%20Apps%20Script-green)
+![Runtime](https://img.shields.io/badge/Google%20Apps%20Script-V8-green)
+![Author](https://img.shields.io/badge/Auteur-Fabrice%20Faucheux-orange)
 
 Un script complet pour Google Docs permettant aux utilisateurs de dessiner, insérer et sauvegarder leur signature manuscrite directement dans leurs documents, sans passer par des outils tiers.
 
